@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main"] # Certifique-se que o nome da sua branch principal é 'main'
+    branches: ["main"]
 
 permissions:
   contents: read
@@ -20,7 +20,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-node-version: 20
+          node-version: 20
           cache: 'npm'
           
       - name: Install dependencies
@@ -37,8 +37,7 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps:
-        deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:
