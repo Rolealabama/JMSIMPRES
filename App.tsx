@@ -186,7 +186,7 @@ const App: React.FC = () => {
                   placeholder="0000"
                   maxLength={4}
                   value={orderNumber}
-                  onChange={(e) => setOrderNumber(e.target.value)}
+                  onChange={(e: { target: { value: any; }; }) => setOrderNumber(e.target.value)}
                   className="w-full border-2 border-gray-300 rounded-lg p-3 text-2xl font-black text-center focus:border-red-500 outline-none"
                 />
               </div>
