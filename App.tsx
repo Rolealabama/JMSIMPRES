@@ -4,23 +4,27 @@ import { BagType, LabelData, LabelMode } from './types';
 import PrintableLabel from './components/PrintableLabel';
 
 const App: React.FC = () => {
+  // ===== MODO SELECIONADO =====
   const [mode, setMode] = useState<LabelMode>(LabelMode.IFOOD);
   
-  // iFood States
-  const [orderNumber, setOrderNumber] = useState<string>('');
-  const [dryCount, setDryCount] = useState<number>(1);
-  const [coldCount, setColdCount] = useState<number>(0);
+  // ===== ESTADOS DO MODO IFOOD =====
+  // Campos para geração de etiquetas do iFood
+  const [orderNumber, setOrderNumber] = useState<string>(''); // Número do pedido (0000 a 9999)
+  const [dryCount, setDryCount] = useState<number>(1);       // Quantidade de volumes secos
+  const [coldCount, setColdCount] = useState<number>(0);     // Quantidade de volumes gelados
 
-  // Compra States
-  const [clientName, setClientName] = useState<string>('');
-  const [purchaseNumber, setPurchaseNumber] = useState<string>('');
-  const [compraDryCount, setCompraDryCount] = useState<number>(1);
-  const [compraColdCount, setCompraColdCount] = useState<number>(0);
+  // ===== ESTADOS DO MODO COMPRA =====
+  // Campos para geração de etiquetas de compra (Compra na Hora)
+  const [clientName, setClientName] = useState<string>('');          // Nome completo do cliente
+  const [purchaseNumber, setPurchaseNumber] = useState<string>('');  // Número da compra
+  const [compraDryCount, setCompraDryCount] = useState<number>(1);   // Quantidade de volumes secos
+  const [compraColdCount, setCompraColdCount] = useState<number>(0); // Quantidade de volumes gelados
 
-  // Placa States
-  const [placaTitle, setPlacaTitle] = useState<string>('RESERVADO DRIVE');
-  const [placaClientName, setPlacaClientName] = useState<string>('');
-  const [placaCount, setPlacaCount] = useState<number>(1);
+  // ===== ESTADOS DO MODO PLACA =====
+  // Campos para geração de placas de aviso
+  const [placaTitle, setPlacaTitle] = useState<string>('RESERVADO DRIVE');    // Texto principal da placa
+  const [placaClientName, setPlacaClientName] = useState<string>('');         // Informação adicional (opcional)
+  const [placaCount, setPlacaCount] = useState<number>(1);                    // Quantidade de placas a gerar
 
   const isIFood = mode === LabelMode.IFOOD;
   const isCompra = mode === LabelMode.COMPRA;
@@ -35,13 +39,19 @@ const App: React.FC = () => {
     }
   }, [isPlaca]);
 
+  // ===== GERAÇÃO DE ETIQUETAS =====
+  // Cria as etiquetas baseado no modo e parâmetros selecionados
+  // Otimizado com useMemo para evitar recálculos desnecessários
   const labels = useMemo(() => {
     const generatedLabels: LabelData[] = [];
 
+    // --- MODO IFOOD ---
+    // Gera uma etiqueta para cada volume (seco e gelado)
     if (mode === LabelMode.IFOOD) {
-      if (!orderNumber) return [];
-      const total = dryCount + coldCount;
+      if (!orderNumber) return []; // Valida se número do pedido foi informado
+      const total = dryCount + coldCount; // Total de volumes desta entrega
       
+      // Cria etiquetas para volumes secos
       for (let i = 1; i <= dryCount; i++) {
         generatedLabels.push({
           title: orderNumber,
@@ -53,6 +63,7 @@ const App: React.FC = () => {
           mode: LabelMode.IFOOD
         });
       }
+      // Cria etiquetas para volumes gelados
       for (let i = 1; i <= coldCount; i++) {
         generatedLabels.push({
           title: orderNumber,
@@ -65,9 +76,12 @@ const App: React.FC = () => {
         });
       }
     } else if (mode === LabelMode.COMPRA) {
-      if (!purchaseNumber && !clientName) return [];
-      const total = compraDryCount + compraColdCount;
+      // --- MODO COMPRA ---
+      // Gera etiquetas para compras (Compra na Hora)
+      if (!purchaseNumber && !clientName) return []; // Valida se compra ou cliente foram informados
+      const total = compraDryCount + compraColdCount; // Total de volumes desta compra
 
+      // Cria etiquetas para volumes secos
       for (let i = 1; i <= compraDryCount; i++) {
         generatedLabels.push({
           title: purchaseNumber,
@@ -80,6 +94,7 @@ const App: React.FC = () => {
           mode: LabelMode.COMPRA
         });
       }
+      // Cria etiquetas para volumes gelados
       for (let i = 1; i <= compraColdCount; i++) {
         generatedLabels.push({
           title: purchaseNumber,
@@ -93,7 +108,9 @@ const App: React.FC = () => {
         });
       }
     } else if (mode === LabelMode.PLACA) {
-      if (!placaTitle) return [];
+      // --- MODO PLACA ---
+      // Gera placas de aviso (tamanho A4 landscape)
+      if (!placaTitle) return []; // Valida se título foi informado
       for (let i = 0; i < placaCount; i++) {
         generatedLabels.push({
           title: placaTitle,
@@ -109,14 +126,22 @@ const App: React.FC = () => {
     }
 
     return generatedLabels;
-  }, [mode, orderNumber, dryCount, coldCount, clientName, purchaseNumber, compraDryCount, compraColdCount, placaTitle, placaClientName, placaCount]);
+  }, [mode, orderNumber, dryCount, coldCount, clientName, purchaseNumber, compraDryCount, compraColdCount, placaTitle, placaClientName, placaCount]); // Recalcula quando qualquer dependência muda
 
+  // ===== HANDLERS =====
+  
+  /**
+   * Abre a janela de impressão do navegador
+   * Delay garante que as classes de orientação (landscape-mode) foram aplicadas
+   */
   const handlePrint = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Pequeno delay para garantir que o navegador processou a alteração de classe no body se necessário
     setTimeout(() => window.print(), 100);
   };
 
+  /**
+   * Limpa todos os campos do modo atual
+   */
   const handleClear = () => {
     if (isIFood) {
       setOrderNumber('');
@@ -133,6 +158,8 @@ const App: React.FC = () => {
     }
   };
 
+  // ===== VALIDAÇÃO =====
+  // Verifica se os dados obrigatórios foram preenchidos para habilitar o botão de impressão
   const isValid = useMemo(() => {
     if (isIFood) return orderNumber.length >= 1 && (dryCount + coldCount > 0);
     if (isCompra) return (clientName.length > 0 || purchaseNumber.length > 0);
@@ -142,6 +169,21 @@ const App: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 print:p-0 print:max-w-none">
+      <style>{`
+        @media print {
+          /* Otimizado para Postek (impressora térmica 100mm rolo) */
+          @page { size: 100mm 50mm; margin: 0; padding: 0; }
+          body { margin: 0; padding: 0; }
+          .label-card { margin: 0 !important; page-break-after: avoid; break-after: auto; }
+          .print-page-break { page-break-after: always; }
+        }
+        @media print and (orientation: landscape) {
+          /* Placas em A4 landscape */
+          @page { size: A4 landscape; margin: 10mm; }
+          .label-card { page-break-after: always; }
+        }
+        .label-card { box-sizing: border-box; }
+      `}</style>
       {/* Navigation Tabs */}
       <nav className="no-print flex mb-6 bg-gray-200 p-1 rounded-xl shadow-inner">
         <button
